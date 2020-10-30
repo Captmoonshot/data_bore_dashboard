@@ -1,14 +1,34 @@
 import os
 
+import requests
+import json
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 
 import pandas as pd
 
-df = pd.read_csv('movie_and_demographic_data.csv')
+# df = pd.read_csv('movie_and_demographic_data.csv')
+# response = requests.get("http://127.0.0.1:8000/api/sentiment/")
 
-def generate_table(dataframe, max_rows=10):
+def get_data(source):
+	results = []
+
+	response = requests.get(source)
+	sentiments = json.loads(response.text)
+	df = pd.DataFrame(sentiments)
+	df = df.set_index(['id'])
+	for row in df['results']:
+		if row == 1:
+			results.append('Loved it!')
+		else:
+			results.append('Hated it!')
+	df['results'] = results
+	return df
+
+
+def generate_table(dataframe, max_rows=7):
 	return html.Table([
 		html.Thead(
 			html.Tr([html.Th(col) for col in dataframe.columns])
@@ -26,14 +46,24 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 server = app.server
 
-app.layout = html.Div(children=[
-	html.H4(children='Movie Review and Demographic Data'),
-	generate_table(df),
-	html.Br(),
-	html.Br()
-])
+# data_source = "https://data-bore.herokuapp.com/api/sentiment/"
+
+# df = get_data(data_source)
+
+def serve_layout():
+	data_source = "https://data-bore.herokuapp.com/api/sentiment/"
+	df = get_data(data_source)
+	return html.Div(children=[
+		html.H4(children='Movie Review and Demographic Data'),
+		generate_table(df),
+		html.Br(),
+		html.Br()
+	])
+
+app.layout = serve_layout
 
 
 if __name__ == '__main__':
 	app.run_server(debug=True)
+
 
