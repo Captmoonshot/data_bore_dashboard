@@ -10,6 +10,8 @@ pandas = "*"
 psycopg2-binary = "*"
 ipython = "*"
 requests = "*"
+python-dotenv = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
