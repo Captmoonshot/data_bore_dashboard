@@ -1,5 +1,7 @@
 import os
 
+from dotenv import load_dotenv
+
 import requests
 import json
 
@@ -8,6 +10,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 import pandas as pd
+
+load_dotenv()
 
 # df = pd.read_csv('movie_and_demographic_data.csv')
 # response = requests.get("http://127.0.0.1:8000/api/sentiment/")
@@ -40,18 +44,8 @@ def generate_table(dataframe, max_rows=7):
 		])
 	])
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-server = app.server
-
-# data_source = "https://data-bore.herokuapp.com/api/sentiment/"
-
-# df = get_data(data_source)
-
-def serve_layout():
-	data_source = "https://data-bore.herokuapp.com/api/sentiment/"
+def serve_layout(data_source):
 	df = get_data(data_source)
 	return html.Div(children=[
 		html.H4(children='Movie Review and Demographic Data'),
@@ -60,7 +54,22 @@ def serve_layout():
 		html.Br()
 	])
 
-app.layout = serve_layout
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+server = app.server
+
+production_api_source = "https://data-bore.herokuapp.com/api/sentiment/"
+development_api_source = "http://127.0.0.1:8000/api/sentiment/"
+
+environment = os.getenv('FLASK_ENV', 'production')
+
+# If running on local development server use local api else use data-bore.herokuapp.com
+if environment == 'development':
+	app.layout = serve_layout(development_api_source)
+else:
+	app.layout = serve_layout(production_api_source)
 
 
 if __name__ == '__main__':
