@@ -56,8 +56,8 @@ server = app.server
 environment = os.getenv('FLASK_ENV', 'production')
 
 def get_sentiment_data(env=None):
-	env = environment
-	if environment == "development":
+	
+	if env == "development":
 		URL = 'http://127.0.0.1:8000/api-auth/login/'
 	else:
 		URL = 'https://data-bore.herokuapp.com/api-auth/login/'
@@ -70,8 +70,8 @@ def get_sentiment_data(env=None):
 		csrftoken = client.cookies['csrf']
 
 	login_data = dict(
-		username=os.getenv('USERNAME'),
-		password=os.getenv('PASSWORD'),
+		username=os.getenv('USERNAME', 'you-will-never-know'),
+		password=os.getenv('PASSWORD', 'you-will-never-know'),
 		csrfmiddlewaretoken=csrftoken,
 		next='/api/sentiment/'
 	)
