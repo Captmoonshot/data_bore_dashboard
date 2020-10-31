@@ -45,15 +45,6 @@ def generate_table(dataframe, max_rows=7):
 	])
 
 
-def serve_layout(data_source):
-	df = get_data(data_source)
-	return html.Div(children=[
-		html.H4(children='Movie Review and Demographic Data'),
-		generate_table(df),
-		html.Br(),
-		html.Br()
-	])
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -65,11 +56,23 @@ development_api_source = "http://127.0.0.1:8000/api/sentiment/"
 
 environment = os.getenv('FLASK_ENV', 'production')
 
-# If running on local development server use local api else use data-bore.herokuapp.com
-if environment == 'development':
-	app.layout = serve_layout(development_api_source)
-else:
-	app.layout = serve_layout(production_api_source)
+def serve_layout(data_source=None, env=None):
+	env = environment
+	if env == "development":
+		data_source = development_api_source
+	else:
+		data_source = production_api_source
+
+	df = get_data(data_source)
+
+	return html.Div(children=[
+		html.H4(children='Movie Review and Demographic Data'),
+		generate_table(df),
+		html.Br(),
+		html.Br()
+	])
+
+app.layout = serve_layout
 
 
 if __name__ == '__main__':
