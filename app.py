@@ -16,20 +16,22 @@ load_dotenv()
 # df = pd.read_csv('movie_and_demographic_data.csv')
 # response = requests.get("http://127.0.0.1:8000/api/sentiment/")
 
-def get_data(source):
-	results = []
+# def get_data(source):
+# 	"""this function to fetch API data is appropriate when
+# 	there's no authentication required at the endpoint."""
+# 	results = []
 
-	response = requests.get(source)
-	sentiments = json.loads(response.text)
-	df = pd.DataFrame(sentiments)
-	df = df.set_index(['id'])
-	for row in df['results']:
-		if row == 1:
-			results.append('Loved it!')
-		else:
-			results.append('Hated it!')
-	df['results'] = results
-	return df
+# 	response = requests.get(source)
+# 	sentiments = json.loads(response.text)
+# 	df = pd.DataFrame(sentiments)
+# 	df = df.set_index(['id'])
+# 	for row in df['results']:
+# 		if row == 1:
+# 			results.append('Loved it!')
+# 		else:
+# 			results.append('Hated it!')
+# 	df['results'] = results
+# 	return df
 
 
 def generate_table(dataframe, max_rows=7):
@@ -51,19 +53,47 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 server = app.server
 
-production_api_source = "https://data-bore.herokuapp.com/api/sentiment/"
-development_api_source = "http://127.0.0.1:8000/api/sentiment/"
-
 environment = os.getenv('FLASK_ENV', 'production')
 
-def serve_layout(data_source=None, env=None):
+def get_sentiment_data(env=None):
 	env = environment
-	if env == "development":
-		data_source = development_api_source
+	if environment == "development":
+		URL = 'http://127.0.0.1:8000/api-auth/login/'
 	else:
-		data_source = production_api_source
+		URL = 'https://data-bore.herokuapp.com/api-auth/login/'
 
-	df = get_data(data_source)
+	client = requests.session()
+	client.get(URL)
+	if 'csrftoken' in client.cookies:
+		csrftoken = client.cookies['csrftoken']
+	else:
+		csrftoken = client.cookies['csrf']
+
+	login_data = dict(
+		username=os.getenv('USERNAME'),
+		password=os.getenv('PASSWORD'),
+		csrfmiddlewaretoken=csrftoken,
+		next='/api/sentiment/'
+	)
+	r = client.post(URL, data=login_data, headers=dict(Referer=URL))
+
+	results = []
+
+	sentiments = json.loads(r.text)
+	df = pd.DataFrame(sentiments)
+	df = df.set_index(['id'])
+	for row in df['results']:
+		if row == 1:
+			results.append('Loved it!')
+		else:
+			results.append('Hated it!')
+	df['results'] = results
+	return df
+
+def serve_layout(env=None):
+	env = environment
+
+	df = get_sentiment_data(env=env)
 
 	return html.Div(children=[
 		html.H4(children='Movie Review and Demographic Data'),
@@ -73,6 +103,9 @@ def serve_layout(data_source=None, env=None):
 	])
 
 app.layout = serve_layout
+
+
+
 
 
 if __name__ == '__main__':
