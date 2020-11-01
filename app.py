@@ -68,7 +68,7 @@ server = app.server
 environment = os.getenv('FLASK_ENV', 'production')
 
 
-def generate_table(dataframe, max_rows=5):
+def generate_table(dataframe, max_rows=10):
 	return html.Table([
 		html.Thead(
 			html.Tr([html.Th(col) for col in dataframe.columns])
