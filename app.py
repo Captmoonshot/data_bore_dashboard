@@ -1,3 +1,10 @@
+"""The following Dash App will automatically detect if running in local
+development mode and will use the local version of the Django REST API (called Data-Bore) running
+in the background.  If for testing or other reasons, you wish to run without the local version of
+Django REST API (Data-Bore), simply set the environment variable API_IS_UP=False.  This will
+use the movie_and_demographic_data.csv for its pandas DataFrame.  And will allow the user to run 
+the Dash up in a stand-alone fashion."""
+
 import os
 
 from dotenv import load_dotenv
