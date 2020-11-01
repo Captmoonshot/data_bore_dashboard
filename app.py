@@ -41,6 +41,7 @@ load_dotenv()
 # 	df['results'] = results
 # 	return df
 
+
 def get_sentiment_data_local(path):
 	"""this function is only used when the API is not working
 	for whatever reason both locally and production-wise.  Based
@@ -67,8 +68,10 @@ server = app.server
 
 environment = os.getenv('FLASK_ENV', 'production')
 
+api_is_up = os.getenv('API_IS_UP', 'True')
 
-def generate_table(dataframe, max_rows=10):
+
+def generate_table(dataframe, max_rows=6):
 	return html.Table([
 		html.Thead(
 			html.Tr([html.Th(col) for col in dataframe.columns])
@@ -108,11 +111,14 @@ def get_sentiment_data(env=None):
 	df = pd.DataFrame(sentiments)
 	df = df.set_index(['id'])
 	for row in df['results']:
+		# Change 'results' column to something human-readable
 		if row == 1:
 			results.append('Loved it!')
 		else:
 			results.append('Hated it!')
 	df['results'] = results
+	# Sort by most recent reviews
+	df.sort_values(by=['timestamp'], inplace=True, ascending=False)
 	return df
 
 def serve_layout(env=None):
@@ -127,6 +133,7 @@ def serve_layout(env=None):
 		html.Br()
 	])
 
+
 def serve_layout_local():
 	df = get_sentiment_data_local(path='movie_and_demographic_data.csv')
 
@@ -138,13 +145,10 @@ def serve_layout_local():
 	])
 
 
-api_is_up = os.getenv('API_IS_UP', True)
-
-if api_is_up == True:
+if api_is_up == 'True':
 	app.layout = serve_layout
-elif api_is_up == False:
+if api_is_up == 'False':
 	app.layout = serve_layout_local
-
 
 
 
