@@ -8,6 +8,7 @@ import json
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.express as px
 
 import pandas as pd
 
@@ -33,8 +34,34 @@ load_dotenv()
 # 	df['results'] = results
 # 	return df
 
+def get_sentiment_data_local(path):
+	"""this function is only used when the API is not working
+	for whatever reason both locally and production-wise.  Based
+	on an environment variable API_IS_UP=True. This is really for testing purposes."""
+	results = []
+	df = pd.read_csv(path)
+	for row in df['results']:
+		if row == 1:
+			results.append('Loved it!')
+		else:
+			results.append('Hated it!')
+	df['results'] = results
+	return df
 
-def generate_table(dataframe, max_rows=7):
+
+
+
+
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+server = app.server
+
+environment = os.getenv('FLASK_ENV', 'production')
+
+
+def generate_table(dataframe, max_rows=5):
 	return html.Table([
 		html.Thead(
 			html.Tr([html.Th(col) for col in dataframe.columns])
@@ -45,15 +72,6 @@ def generate_table(dataframe, max_rows=7):
 			]) for i in range(min(len(dataframe), max_rows))
 		])
 	])
-
-
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-server = app.server
-
-environment = os.getenv('FLASK_ENV', 'production')
 
 def get_sentiment_data(env=None):
 	
@@ -102,7 +120,23 @@ def serve_layout(env=None):
 		html.Br()
 	])
 
-app.layout = serve_layout
+def serve_layout_local():
+	df = get_sentiment_data_local(path='movie_and_demographic_data.csv')
+
+	return html.Div(children=[
+		html.H4(children='Movie Review and Demographic Data'),
+		generate_table(df),
+		html.Br(),
+		html.Br()
+	])
+
+
+api_is_up = os.getenv('API_IS_UP', False)
+
+if api_is_up == True:
+	app.layout = serve_layout
+else:
+	app.layout = serve_layout_local
 
 
 
