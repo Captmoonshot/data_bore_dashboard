@@ -138,11 +138,11 @@ def serve_layout_local():
 	])
 
 
-api_is_up = os.getenv('API_IS_UP', False)
+api_is_up = os.getenv('API_IS_UP', True)
 
 if api_is_up == True:
 	app.layout = serve_layout
-else:
+elif api_is_up == False:
 	app.layout = serve_layout_local
 
 
