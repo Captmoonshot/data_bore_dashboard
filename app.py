@@ -48,16 +48,15 @@ def get_sentiment_data_local(path):
 	on an environment variable API_IS_UP=True. This is really for testing purposes."""
 	results = []
 	df = pd.read_csv(path)
-	for row in df['results']:
-		if row == 1:
-			results.append('Loved it!')
-		else:
-			results.append('Hated it!')
-	df['results'] = results
+	if df['results'].dtypes == 'int64':
+		for row in df['results']:
+			if row == 1:
+				results.append('Loved it!')
+			else:
+				results.append('Hated it!')
+		df['results'] = results
+		return df
 	return df
-
-
-
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -126,9 +125,52 @@ def serve_layout(env=None):
 
 	df = get_sentiment_data(env=env)
 
+	# A second DataFrame where all the movies were loved
+	filt = df['results'] == 'Loved it!'
+	df_loved = df[filt]
+
+	# A column for df_loved with binned ages
+	bins = [12, 25, 35, 60, 100]
+	group_names = ["Teenager", "Young-adult", "Middle-aged", "Senior"]
+	age_binned = pd.cut(df_loved['age'], bins, labels=group_names)
+	df_loved['age_binned'] = age_binned
+
+	fig1 = px.bar(df, x="movie_title", color="results", barmode="group")
+	fig2 = px.bar(df_loved, x="movie_title", color="gender", barmode="group")
+	fig3 = px.bar(df_loved, x="movie_title", color="country", barmode="group")
+	fig4 = px.bar(df_loved, x="movie_title", color="age_binned", barmode="group")
+
 	return html.Div(children=[
 		html.H4(children='Movie Review and Demographic Data'),
 		generate_table(df),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Loved it! vs. Hated it!'),
+		dcc.Graph(
+			id='graph-1',
+			figure=fig1
+		),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Breakdown By Gender for those who Loved it'),
+		dcc.Graph(
+			id='graph-2',
+			figure=fig2
+		),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Breakdown By Country for those who Loved it'),
+		dcc.Graph(
+			id='graph-3',
+			figure=fig3
+		),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Breakdown By Age for those who Loved it'),
+		dcc.Graph(
+			id='graph-4',
+			figure=fig4
+		),
 		html.Br(),
 		html.Br()
 	])
@@ -137,12 +179,56 @@ def serve_layout(env=None):
 def serve_layout_local():
 	df = get_sentiment_data_local(path='movie_and_demographic_data.csv')
 
+	# A second DataFrame where all the movies were loved
+	filt = df['results'] == 'Loved it!'
+	df_loved = df[filt]
+
+	# A column for df_loved with binned ages
+	bins = [12, 25, 35, 60, 100]
+	group_names = ["Teenager", "Young-adult", "Middle-aged", "Senior"]
+	age_binned = pd.cut(df_loved['age'], bins, labels=group_names)
+	df_loved['age_binned'] = age_binned
+
+	fig1 = px.bar(df, x="movie_title", color="results", barmode="group")
+	fig2 = px.bar(df_loved, x="movie_title", color="gender", barmode="group")
+	fig3 = px.bar(df_loved, x="movie_title", color="country", barmode="group")
+	fig4 = px.bar(df_loved, x="movie_title", color="age_binned", barmode="group")
+
 	return html.Div(children=[
 		html.H4(children='Movie Review and Demographic Data'),
 		generate_table(df),
 		html.Br(),
+		html.Br(),
+		html.H4(children='Loved it! vs. Hated it!'),
+		dcc.Graph(
+			id='graph-1',
+			figure=fig1
+		),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Breakdown By Gender for those who Loved it'),
+		dcc.Graph(
+			id='graph-2',
+			figure=fig2
+		),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Breakdown By Country for those who Loved it'),
+		dcc.Graph(
+			id='graph-3',
+			figure=fig3
+		),
+		html.Br(),
+		html.Br(),
+		html.H4(children='Breakdown By Age for those who Loved it'),
+		dcc.Graph(
+			id='graph-4',
+			figure=fig4
+		),
+		html.Br(),
 		html.Br()
 	])
+
 
 
 if api_is_up == 'True':
@@ -155,5 +241,8 @@ if api_is_up == 'False':
 
 if __name__ == '__main__':
 	app.run_server(debug=True)
+
+
+
 
 
